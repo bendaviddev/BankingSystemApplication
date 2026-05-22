@@ -1,0 +1,27 @@
+# Java build output
+target/
+BankingSystemAPI/target/
+*.class
+
+# Node
+banking-frontend/node_modules/
+banking-frontend/dist/
+
+# Secrets — never copy into an image
+.env
+.env.*
+!.env.example
+
+# Version control and editor files
+.git/
+.gitignore
+.DS_Store
+.idea/
+*.iml
+.vscode/
+*.zip
+*.tar.gz
+
+# Logs
+*.log
+logs/

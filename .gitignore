@@ -1,0 +1,46 @@
+# Maven build output
+target/
+BankingSystemAPI/target/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+application-local.properties
+**/application-local.properties
+
+# Java compiled files
+*.class
+
+# VS Code
+.vscode/
+
+# IntelliJ
+.idea/
+*.iml
+
+# Mac files
+.DS_Store
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+
+# Archives (local exports — do not commit)
+*.zip
+*.tar.gz
+
+# Node / frontend
+banking-frontend/node_modules/
+banking-frontend/dist/
+build/
+
+# IDE tooling artifacts
+.github/java-upgrade/

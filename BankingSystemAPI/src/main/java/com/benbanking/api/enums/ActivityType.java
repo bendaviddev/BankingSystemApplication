@@ -1,0 +1,15 @@
+package com.benbanking.api.enums;
+
+public enum ActivityType {
+    LOGIN,
+    LOGOUT,
+    VIEW_BANK_ACCOUNT,
+    VIEW_TRANSACTION_HISTORY,
+    CHANGE_PASSWORD,
+    UPDATE_PERSONAL_INFORMATION,
+    OPEN_NEW_BANK_ACCOUNT,
+    CLOSE_BANK_ACCOUNT,
+    DEPOSIT,
+    WITHDRAWAL,
+    TRANSFER
+}

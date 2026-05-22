@@ -1,0 +1,62 @@
+services:
+
+  # ── MySQL 8 ─────────────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: banking_system
+    ports:
+      - "3306:3306"
+    volumes:
+      # Persistent data — survives container restarts
+      - mysql_data:/var/lib/mysql
+      # Schema + migration scripts run once when the data volume is empty.
+      # MySQL executes files in /docker-entrypoint-initdb.d in name order.
+      - ./BankingSystemAPI/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./BankingSystemAPI/src/main/resources/migrate-add-role.sql:/docker-entrypoint-initdb.d/02-migrate-add-role.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  # ── Spring Boot API ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./BankingSystemAPI
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    environment:
+      SPRING_PROFILES_ACTIVE: mysql
+      # Use the Docker service name "db" instead of "localhost" — containers
+      # cannot reach each other via localhost on the same Compose network.
+      DB_URL: jdbc:mysql://db:3306/banking_system
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "8080:8080"
+
+  # ── React + Vite dev server ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./banking-frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    environment:
+      # Tells vite.config.ts where to proxy /api requests inside Docker.
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source so Vite's HMR picks up edits without rebuilding the image.
+      - ./banking-frontend/src:/app/src
+
+volumes:
+  mysql_data:
