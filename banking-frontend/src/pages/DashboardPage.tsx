@@ -1,373 +1,256 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import type { BankAccount, Transaction } from "../types";
-
-type ActionTab = "deposit" | "withdraw" | "transfer" | "open";
-
-const TAB_LABELS: Record<ActionTab, string> = {
-  deposit: "Deposit",
-  withdraw: "Withdraw",
-  transfer: "Transfer",
-  open: "Open Account",
-};
-
-const TX_LABELS: Record<string, string> = {
-  DEPOSIT: "↑ Deposit",
-  WITHDRAWAL: "↓ Withdraw",
-  TRANSFER: "⇄ Transfer",
-};
-
-function formatMoney(n: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+import { useToast } from "../context/ToastContext";
+import type { Alert, AnalyticsSummary, BankAccount, Transaction } from "../types";
+import { ALERT_SEVERITY_ICON, ALERT_SEVERITY_TONE, ALERT_TYPE_LABELS, formatMoney } from "../lib/format";
+import { StatCard } from "../components/ui/StatCard";
+import { Card } from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
+import { Spinner } from "../components/ui/Spinner";
+import { ErrorState } from "../components/ui/ErrorState";
+import { EmptyState } from "../components/ui/EmptyState";
+import { TransactionTable } from "../components/TransactionTable";
+import { BalanceHistoryChart } from "../components/charts/BalanceHistoryChart";
+import { OpenAccountModal } from "../components/OpenAccountModal";
 
 export function DashboardPage() {
-  const { session, logout } = useAuth();
+  const { profile } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<ActionTab>("deposit");
-  const [amount, setAmount] = useState("");
-  const [toAccountId, setToAccountId] = useState("");
-  const [accountType, setAccountType] = useState<"BASIC" | "SAVING">("SAVING");
-  const [openingBalance, setOpeningBalance] = useState("100");
-  const [actionMessage, setActionMessage] = useState("");
-  const [actionError, setActionError] = useState("");
-  const [loadError, setLoadError] = useState("");
+  const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [recentTx, setRecentTx] = useState<Transaction[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!session) return;
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [openAccountOpen, setOpenAccountOpen] = useState(false);
+
+  const load = useCallback(async () => {
     setLoading(true);
-    setLoadError("");
+    setError(null);
     try {
-      const [acct, tx] = await Promise.all([
+      const [acct, summaryRes, txRes, alertsRes] = await Promise.all([
         api.getAccounts(),
-        api.getTransactions(),
+        api.getAnalyticsSummary(),
+        api.getTransactions({ size: 5, sort: "date_desc" }),
+        api.getAlerts(),
       ]);
       setAccounts(acct);
-      setTransactions(tx);
-      if (acct.length > 0) {
-        setSelectedId((prev) => prev ?? acct[0].accountId);
-      }
+      setSummary(summaryRes);
+      setRecentTx(txRes.items);
+      setAlerts(alertsRes.items.slice(0, 3));
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Failed to load data. Is the API running?");
+      setError(err instanceof Error ? err.message : "Failed to load dashboard data.");
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, []);
 
   useEffect(() => {
-    if (!session) {
-      navigate("/login");
+    void load();
+  }, [load]);
+
+  if (loading) {
+    return <Spinner label="Loading your dashboard…" />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} onRetry={load} />;
+  }
+
+  const checkingTotal = accounts
+    .filter((a) => a.accountType === "CHECKING")
+    .reduce((sum, a) => sum + a.balance, 0);
+  const savingsTotal = accounts
+    .filter((a) => a.accountType === "SAVINGS")
+    .reduce((sum, a) => sum + a.balance, 0);
+  const totalBalance = summary?.totalBalance ?? accounts.reduce((sum, a) => sum + a.balance, 0);
+
+  return (
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1>Welcome back{profile?.firstName ? `, ${profile.firstName}` : ""}</h1>
+          <p className="muted">Here's what's happening with your money.</p>
+        </div>
+      </div>
+
+      <div className="stat-grid">
+        <StatCard label="Total balance" value={formatMoney(totalBalance)} sub={`${accounts.length} account${accounts.length !== 1 ? "s" : ""}`} />
+        <StatCard label="Checking" value={formatMoney(checkingTotal)} />
+        <StatCard label="Savings" value={formatMoney(savingsTotal)} />
+        <StatCard
+          label="Last 30 days"
+          value={`${formatMoney(summary?.totalIn30d ?? 0)} in`}
+          sub={`${formatMoney(summary?.totalOut30d ?? 0)} out`}
+          tone="success"
+        />
+      </div>
+
+      <div className="quick-actions">
+        <Button onClick={() => navigate("/app/transfer")}>Transfer</Button>
+        <Button variant="secondary" onClick={() => setDepositOpen(true)} disabled={accounts.length === 0}>
+          Deposit funds
+        </Button>
+        <Button variant="secondary" onClick={() => setOpenAccountOpen(true)}>
+          Open account
+        </Button>
+        <Button variant="ghost" onClick={() => navigate("/app/analytics")}>
+          View analytics
+        </Button>
+      </div>
+
+      <div className="grid-2">
+        <Card>
+          <h2>Balance history</h2>
+          <BalanceHistoryChart data={summary?.balanceHistory ?? []} />
+        </Card>
+
+        <Card>
+          <h2>Alerts</h2>
+          {alerts.length === 0 ? (
+            <EmptyState icon="✅" title="You're all caught up" description="No unread alerts right now." />
+          ) : (
+            <ul className="alert-preview-list">
+              {alerts.map((a) => (
+                <li key={a.alertId} className={`alert-preview-item ${a.read ? "" : "unread"}`}>
+                  <span className={`alert-icon tone-${ALERT_SEVERITY_TONE[a.severity]}`} aria-hidden="true">
+                    {ALERT_SEVERITY_ICON[a.severity]}
+                  </span>
+                  <div>
+                    <div className="alert-preview-title">{ALERT_TYPE_LABELS[a.alertType]}</div>
+                    <div className="muted">{a.message}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link to="/app/alerts" className="view-all-link">
+            View all alerts →
+          </Link>
+        </Card>
+      </div>
+
+      <Card>
+        <div className="card-header">
+          <h2>Recent transactions</h2>
+          <Link to="/app/transactions" className="view-all-link">
+            View all →
+          </Link>
+        </div>
+        <TransactionTable transactions={recentTx} showRunningBalance={false} />
+      </Card>
+
+      <DepositModal
+        open={depositOpen}
+        accounts={accounts}
+        onClose={() => setDepositOpen(false)}
+        onSuccess={() => {
+          setDepositOpen(false);
+          toast("Deposit successful.", "success");
+          void load();
+        }}
+      />
+
+      <OpenAccountModal
+        open={openAccountOpen}
+        onClose={() => setOpenAccountOpen(false)}
+        onSuccess={() => {
+          setOpenAccountOpen(false);
+          toast("Account opened.", "success");
+          void load();
+        }}
+      />
+    </div>
+  );
+}
+
+function DepositModal({
+  open,
+  accounts,
+  onClose,
+  onSuccess,
+}: {
+  open: boolean;
+  accounts: BankAccount[];
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [accountId, setAccountId] = useState<number | "">("");
+  const [amount, setAmount] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setAccountId(accounts[0]?.accountId ?? "");
+      setAmount("");
+      setError("");
+    }
+  }, [open, accounts]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    const value = parseFloat(amount);
+    if (!accountId) {
+      setError("Select an account.");
       return;
     }
-    void refresh();
-  }, [session, navigate, refresh]);
-
-  async function handleAction(e: FormEvent) {
-    e.preventDefault();
-    setActionMessage("");
-    setActionError("");
+    if (!value || value <= 0) {
+      setError("Enter a valid amount greater than $0.");
+      return;
+    }
     setSubmitting(true);
-
     try {
-      if (tab === "open") {
-        await api.openAccount({
-          accountType,
-          openingBalance: parseFloat(openingBalance) || 0,
-        });
-        setActionMessage(`${accountType === "SAVING" ? "Savings" : "Basic"} account opened.`);
-        setOpeningBalance("100");
-      } else {
-        if (!selectedId) throw new Error("Select an account first.");
-        const value = parseFloat(amount);
-        if (!value || value <= 0) throw new Error("Enter a valid amount greater than $0.");
-
-        if (tab === "deposit") {
-          await api.deposit({ accountId: selectedId, amount: value });
-          setActionMessage(`Deposited ${formatMoney(value)} successfully.`);
-        } else if (tab === "withdraw") {
-          await api.withdraw({ accountId: selectedId, amount: value });
-          setActionMessage(`Withdrew ${formatMoney(value)} successfully.`);
-        } else {
-          const toId = parseInt(toAccountId, 10);
-          if (!toId) throw new Error("Enter a valid destination account ID.");
-          await api.transfer({ fromAccountId: selectedId, toAccountId: toId, amount: value });
-          setActionMessage(`Transferred ${formatMoney(value)} successfully.`);
-        }
-        setAmount("");
-      }
-      await refresh();
+      await api.deposit({ accountId: Number(accountId), amount: value });
+      onSuccess();
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Action failed. Please try again.");
+      setError(err instanceof Error ? err.message : "Deposit failed.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (!session) return null;
-
-  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const activeAccounts = accounts.filter((a) => a.status === "ACTIVE").length;
-
   return (
-    <div className="app-shell">
-      {/* ── Header ── */}
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-icon">🏦</div>
-          Ben Banking
-        </div>
-        <div className="topbar-right">
-          <span className="user-chip">
-            {session.username}
-            {session.role === "ADMIN" && " · Admin"}
-          </span>
-          <button type="button" className="secondary" onClick={logout}>
-            Sign out
-          </button>
-        </div>
-      </header>
-
-      {/* ── Load error ── */}
-      {loadError && <div className="alert error" style={{ marginBottom: "1.25rem" }}>{loadError}</div>}
-
-      {/* ── Summary bar ── */}
-      {!loading && accounts.length > 0 && (
-        <div className="summary-bar">
-          <div className="summary-stat">
-            <div className="stat-label">Total Balance</div>
-            <div className="stat-value">{formatMoney(totalBalance)}</div>
-            <div className="stat-sub">
-              {activeAccounts} active account{activeAccounts !== 1 ? "s" : ""}
-            </div>
-          </div>
-          <div className="summary-stat">
-            <div className="stat-label">Transactions</div>
-            <div className="stat-value">{transactions.length}</div>
-            <div className="stat-sub">all time</div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Accounts & Actions ── */}
-      <div className="grid-2">
-        {/* Accounts */}
-        <section className="card">
-          <h2>Your accounts</h2>
-          {loading ? (
-            <div className="loading-state">
-              <span className="spinner" /> Loading accounts…
-            </div>
-          ) : accounts.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🏦</div>
-              <strong>No accounts yet</strong>
-              <span>Open your first account using the panel on the right.</span>
-            </div>
-          ) : (
-            <div className="accounts-list">
-              {accounts.map((a) => (
-                <button
-                  key={a.accountId}
-                  type="button"
-                  className={`account-item ${selectedId === a.accountId ? "selected" : ""}`}
-                  onClick={() => setSelectedId(a.accountId)}
-                >
-                  <div>
-                    <div className="account-number">{a.accountNumber}</div>
-                    <div className="account-meta">
-                      <span className={`type-badge ${a.accountType}`}>
-                        {a.accountType === "SAVING" ? "Savings" : "Basic"}
-                      </span>
-                      <span>{a.status}</span>
-                    </div>
-                  </div>
-                  <div className="account-balance">
-                    <div className="balance">{formatMoney(a.balance)}</div>
-                    <div className="balance-label">USD</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Actions */}
-        <section className="card">
-          <h2>Actions</h2>
-
-          {actionMessage && <div className="alert success">{actionMessage}</div>}
-          {actionError && <div className="alert error">{actionError}</div>}
-
-          <div className="tabs">
-            {(["deposit", "withdraw", "transfer", "open"] as ActionTab[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={tab === t ? "active" : ""}
-                onClick={() => {
-                  setTab(t);
-                  setActionMessage("");
-                  setActionError("");
-                }}
-              >
-                {TAB_LABELS[t]}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleAction}>
-            {tab === "open" ? (
-              <>
-                <label htmlFor="accountType">Account type</label>
-                <select
-                  id="accountType"
-                  value={accountType}
-                  onChange={(e) => setAccountType(e.target.value as "BASIC" | "SAVING")}
-                >
-                  <option value="SAVING">Savings</option>
-                  <option value="BASIC">Basic</option>
-                </select>
-
-                <label htmlFor="openingBalance">Opening deposit</label>
-                <input
-                  id="openingBalance"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={openingBalance}
-                  onChange={(e) => setOpeningBalance(e.target.value)}
-                  placeholder="0.00"
-                />
-              </>
-            ) : (
-              <>
-                {accounts.length > 0 && (
-                  <>
-                    <label htmlFor="accountSelect">From account</label>
-                    <select
-                      id="accountSelect"
-                      value={selectedId ?? ""}
-                      onChange={(e) => setSelectedId(parseInt(e.target.value, 10))}
-                    >
-                      {accounts.map((a) => (
-                        <option key={a.accountId} value={a.accountId}>
-                          {a.accountNumber} — {formatMoney(a.balance)}
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                )}
-
-                <label htmlFor="amount">Amount (USD)</label>
-                <input
-                  id="amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  placeholder="0.00"
-                />
-
-                {tab === "transfer" && (
-                  <>
-                    <label htmlFor="toAccountId">To account ID</label>
-                    <input
-                      id="toAccountId"
-                      type="number"
-                      value={toAccountId}
-                      onChange={(e) => setToAccountId(e.target.value)}
-                      required
-                      placeholder="Destination account ID"
-                    />
-                  </>
-                )}
-              </>
-            )}
-
-            <button type="submit" className="btn-full" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <span className="spinner" />
-                  Processing…
-                </>
-              ) : (
-                TAB_LABELS[tab]
-              )}
-            </button>
-          </form>
-        </section>
-      </div>
-
-      {/* ── Transactions ── */}
-      <section className="card" style={{ marginTop: "1.25rem" }}>
-        <h2>Recent transactions</h2>
-
-        {loading ? (
-          <div className="loading-state">
-            <span className="spinner" /> Loading transactions…
-          </div>
-        ) : transactions.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📋</div>
-            <strong>No transactions yet</strong>
-            <span>Deposit or transfer funds to get started.</span>
-          </div>
-        ) : (
-          <table className="transactions-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Account</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((t) => (
-                <tr key={t.transactionId}>
-                  <td className="tx-date">{formatDate(t.createdAt)}</td>
-                  <td>
-                    <span className={`tx-type-badge ${t.transactionType}`}>
-                      {TX_LABELS[t.transactionType] ?? t.transactionType}
-                    </span>
-                  </td>
-                  <td className={`tx-amount ${t.transactionType}`}>
-                    {t.transactionType === "WITHDRAWAL" ? "−" : "+"}
-                    {formatMoney(t.amount)}
-                  </td>
-                  <td className="muted" style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
-                    #{t.accountId}
-                  </td>
-                  <td className="tx-description">{t.description || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
-    </div>
+    <Modal open={open} onClose={onClose} title="Deposit funds">
+      <form onSubmit={handleSubmit} noValidate>
+        {error && <div className="alert error">{error}</div>}
+        <Select
+          id="deposit-account"
+          label="To account"
+          value={accountId}
+          onChange={(e) => setAccountId(Number(e.target.value))}
+        >
+          {accounts.map((a) => (
+            <option key={a.accountId} value={a.accountId}>
+              {a.accountType} — {a.accountNumber} ({formatMoney(a.balance)})
+            </option>
+          ))}
+        </Select>
+        <Input
+          id="deposit-amount"
+          label="Amount (USD)"
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          required
+          placeholder="0.00"
+        />
+        <Button type="submit" fullWidth loading={submitting}>
+          Deposit
+        </Button>
+      </form>
+    </Modal>
   );
 }

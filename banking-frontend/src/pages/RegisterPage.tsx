@@ -1,10 +1,13 @@
 import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { checkPasswordStrength } from "../lib/format";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
 
 export function RegisterPage() {
-  const { login } = useAuth();
+  const { session, login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: "",
@@ -18,13 +21,25 @@ export function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  if (session) {
+    return <Navigate to="/app" replace />;
+  }
+
   function update(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  const strength = checkPasswordStrength(form.password);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (form.password && !strength.valid) {
+      setError("Password doesn't meet the strength requirements below.");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.register(form);
@@ -33,8 +48,9 @@ export function RegisterPage() {
         userId: res.userId,
         username: res.username,
         role: res.role,
+        firstName: res.firstName,
       });
-      navigate("/dashboard");
+      navigate("/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
@@ -45,44 +61,40 @@ export function RegisterPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <div className="auth-brand">
+        <Link to="/" className="auth-brand">
           <div className="auth-brand-icon">🏦</div>
           <span className="auth-brand-name">Ben Banking</span>
-        </div>
+        </Link>
 
         <h1 className="auth-heading">Create account</h1>
-        <p className="auth-subtitle">Join Ben Banking in seconds</p>
+        <p className="auth-subtitle">Join Ben Banking in seconds — it's a demo, no real info required.</p>
 
-        {error && <div className="alert error">{error}</div>}
+        {error && <div className="alert error" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="field-row">
-            <div>
-              <label htmlFor="firstName">First name</label>
-              <input
-                id="firstName"
-                value={form.firstName}
-                onChange={(e) => update("firstName", e.target.value)}
-                required
-                placeholder="Jane"
-                autoFocus
-              />
-            </div>
-            <div>
-              <label htmlFor="lastName">Last name</label>
-              <input
-                id="lastName"
-                value={form.lastName}
-                onChange={(e) => update("lastName", e.target.value)}
-                required
-                placeholder="Smith"
-              />
-            </div>
+            <Input
+              id="firstName"
+              label="First name"
+              value={form.firstName}
+              onChange={(e) => update("firstName", e.target.value)}
+              required
+              placeholder="Jane"
+              autoFocus
+            />
+            <Input
+              id="lastName"
+              label="Last name"
+              value={form.lastName}
+              onChange={(e) => update("lastName", e.target.value)}
+              required
+              placeholder="Smith"
+            />
           </div>
 
-          <label htmlFor="username">Username</label>
-          <input
+          <Input
             id="username"
+            label="Username"
             value={form.username}
             onChange={(e) => update("username", e.target.value)}
             required
@@ -90,9 +102,9 @@ export function RegisterPage() {
             placeholder="janesmith"
           />
 
-          <label htmlFor="password">Password</label>
-          <input
+          <Input
             id="password"
+            label="Password"
             type="password"
             value={form.password}
             onChange={(e) => update("password", e.target.value)}
@@ -100,13 +112,16 @@ export function RegisterPage() {
             autoComplete="new-password"
             placeholder="••••••••"
           />
-          <p className="password-hint">
-            8+ chars · uppercase letter · number · special character
-          </p>
+          <ul className="password-requirements">
+            <li className={strength.minLength ? "met" : ""}>8+ characters</li>
+            <li className={strength.hasUppercase ? "met" : ""}>Uppercase letter</li>
+            <li className={strength.hasNumber ? "met" : ""}>Number</li>
+            <li className={strength.hasSpecial ? "met" : ""}>Special character</li>
+          </ul>
 
-          <label htmlFor="email">Email</label>
-          <input
+          <Input
             id="email"
+            label="Email"
             type="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
@@ -114,11 +129,9 @@ export function RegisterPage() {
             placeholder="jane@example.com"
           />
 
-          <label htmlFor="phone">
-            Phone <span style={{ fontWeight: 400, textTransform: "none" }}>(optional)</span>
-          </label>
-          <input
+          <Input
             id="phone"
+            label="Phone (optional)"
             type="tel"
             value={form.phoneNumber}
             onChange={(e) => update("phoneNumber", e.target.value)}
@@ -126,32 +139,22 @@ export function RegisterPage() {
             placeholder="+1 555 000 0000"
           />
 
-          <label htmlFor="address">
-            Address <span style={{ fontWeight: 400, textTransform: "none" }}>(optional)</span>
-          </label>
-          <input
+          <Input
             id="address"
+            label="Address (optional)"
             value={form.address}
             onChange={(e) => update("address", e.target.value)}
             autoComplete="street-address"
             placeholder="123 Main St"
           />
 
-          <button type="submit" className="btn-full" disabled={loading}>
-            {loading ? (
-              <>
-                <span className="spinner" />
-                Creating account…
-              </>
-            ) : (
-              "Create account"
-            )}
-          </button>
+          <Button type="submit" fullWidth loading={loading}>
+            Create account
+          </Button>
         </form>
 
         <div className="auth-footer">
-          Already have an account?{" "}
-          <Link to="/login">Sign in</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </div>
       </div>
     </div>
