@@ -2,8 +2,6 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="${ROOT}/.env"
-SCHEMA="${ROOT}/BankingSystemAPI/src/main/resources/schema.sql"
-MIGRATE="${ROOT}/BankingSystemAPI/src/main/resources/migrate-add-role.sql"
 PLACEHOLDER_PASSWORD="your_mysql_password_here"
 
 if [[ ! -f "${ENV_FILE}" ]]; then
@@ -54,12 +52,9 @@ if ! mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${DB_USERNAME}" -p"${DB_PAS
   exit 1
 fi
 
-echo "Applying schema to database '${DB_NAME}'..."
-mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" < "${SCHEMA}"
+echo "Ensuring database '${DB_NAME}' exists..."
+mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+  -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`"
 
-if [[ -f "${MIGRATE}" ]]; then
-  echo "Applying migrations..."
-  mysql -h "${MYSQL_HOST}" -P "${MYSQL_PORT}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" "${DB_NAME}" < "${MIGRATE}" 2>/dev/null || true
-fi
-
-echo "MySQL setup complete. Start the API with: ./run-mysql.sh"
+echo "MySQL connection ready. Schema is managed by Flyway — it will apply"
+echo "db/migration on the next application start. Start the API with: ./run-mysql.sh"

@@ -10,12 +10,11 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # Persistent data — survives container restarts
+      # Persistent data — survives container restarts.
+      # Schema is owned entirely by Flyway (BankingSystemAPI/src/main/resources/db/migration) —
+      # no docker-entrypoint-initdb.d mounts here. If you have a stale volume from before
+      # Flyway was introduced, run `docker compose down -v` to drop it and start clean.
       - mysql_data:/var/lib/mysql
-      # Schema + migration scripts run once when the data volume is empty.
-      # MySQL executes files in /docker-entrypoint-initdb.d in name order.
-      - ./BankingSystemAPI/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./BankingSystemAPI/src/main/resources/migrate-add-role.sql:/docker-entrypoint-initdb.d/02-migrate-add-role.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
       interval: 10s

@@ -50,7 +50,7 @@ class BankingApiSecurityTest {
                         .content("""
                                 {"accountId":%d,"amount":50}
                                 """.formatted(accountIdA)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     private String registerAndLogin(String username) throws Exception {
@@ -81,7 +81,7 @@ class BankingApiSecurityTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"accountType":"BASIC","openingBalance":100}
+                                {"accountType":"CHECKING","openingBalance":100}
                                 """))
                 .andExpect(status().isOk())
                 .andReturn();

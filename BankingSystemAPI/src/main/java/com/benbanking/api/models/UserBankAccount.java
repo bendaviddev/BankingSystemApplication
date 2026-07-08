@@ -4,6 +4,9 @@ import com.benbanking.api.enums.BankAccountStatus;
 import com.benbanking.api.enums.BankAccountType;
 import com.benbanking.api.enums.Currency;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 public class UserBankAccount {
 
     private int accountId;
@@ -11,8 +14,10 @@ public class UserBankAccount {
     private String accountNumber;
     private BankAccountType accountType;
     private Currency currency;
-    private double balance;
+    private BigDecimal balance;
     private BankAccountStatus status;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public UserBankAccount(
             int accountId,
@@ -20,8 +25,10 @@ public class UserBankAccount {
             String accountNumber,
             BankAccountType accountType,
             Currency currency,
-            double balance,
-            BankAccountStatus status
+            BigDecimal balance,
+            BankAccountStatus status,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
     ) {
         this.accountId = accountId;
         this.userId = userId;
@@ -30,6 +37,8 @@ public class UserBankAccount {
         this.currency = currency;
         this.balance = balance;
         this.status = status;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public int getAccountId() {
@@ -52,7 +61,7 @@ public class UserBankAccount {
         return currency;
     }
 
-    public double getBalance() {
+    public BigDecimal getBalance() {
         return balance;
     }
 
@@ -60,20 +69,15 @@ public class UserBankAccount {
         return status;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
     public void setStatus(BankAccountStatus status) {
         this.status = status;
-    }
-
-    public void deposit(double amount) {
-        balance += amount;
-    }
-
-    public boolean withdraw(double amount) {
-        if (amount > balance || amount <= 0) {
-            return false;
-        }
-
-        balance -= amount;
-        return true;
     }
 }

@@ -8,7 +8,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,7 @@ public class LogRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
-            PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement statement = connection.prepareStatement(sql, new String[]{"log_id"});
 
             statement.setInt(1, log.getUserId());
             statement.setString(2, log.getActivityType().name());
@@ -79,6 +78,16 @@ public class LogRepository {
         );
 
         return new ArrayList<>(logs);
+    }
+
+    public List<Log> findPaged(int limit, int offset) {
+        String sql = "SELECT * FROM logs ORDER BY created_at DESC, log_id DESC LIMIT ? OFFSET ?";
+        return jdbcTemplate.query(sql, (result, rowNum) -> mapResultSetToLog(result), limit, offset);
+    }
+
+    public long countAll() {
+        Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM logs", Long.class);
+        return count == null ? 0 : count;
     }
 
     private Log mapResultSetToLog(java.sql.ResultSet result) throws java.sql.SQLException {

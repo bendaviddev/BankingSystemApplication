@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Simple sliding-window rate limiter applied only to auth endpoints.
+ * Simple sliding-window rate limiter applied to auth endpoints and account lookup.
  * Limits each client IP to MAX_REQUESTS per WINDOW_MS milliseconds per endpoint.
  * Returns HTTP 429 when the limit is exceeded.
  */
@@ -22,13 +22,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final Set<String> RATE_LIMITED_PATHS = Set.of(
             "/api/auth/login",
-            "/api/auth/register"
+            "/api/auth/register",
+            "/api/accounts/lookup"
     );
 
-    static final int MAX_REQUESTS = 10;
     static final long WINDOW_MS = 60_000L;
 
     private final Map<String, Deque<Long>> requestLog = new ConcurrentHashMap<>();
+    private final boolean trustProxy;
+    private final int maxRequests;
+
+    public RateLimitFilter(boolean trustProxy, int maxRequests) {
+        this.trustProxy = trustProxy;
+        this.maxRequests = maxRequests;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -47,7 +54,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             while (!window.isEmpty() && now - window.peekFirst() > WINDOW_MS) {
                 window.pollFirst();
             }
-            if (window.size() >= MAX_REQUESTS) {
+            if (window.size() >= maxRequests) {
                 response.setStatus(429);
                 response.setContentType("application/json");
                 response.getWriter().write(
@@ -61,9 +68,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        if (trustProxy) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                return forwarded.split(",")[0].trim();
+            }
         }
         return request.getRemoteAddr();
     }

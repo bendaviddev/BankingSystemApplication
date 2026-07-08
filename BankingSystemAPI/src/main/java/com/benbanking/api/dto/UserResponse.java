@@ -3,6 +3,8 @@ package com.benbanking.api.dto;
 import com.benbanking.api.enums.UserRole;
 import com.benbanking.api.models.User;
 
+import java.time.LocalDateTime;
+
 public class UserResponse {
 
     private final int id;
@@ -13,6 +15,7 @@ public class UserResponse {
     private final String email;
     private final String address;
     private final UserRole role;
+    private final LocalDateTime createdAt;
 
     public UserResponse(
             int id,
@@ -22,7 +25,8 @@ public class UserResponse {
             String phoneNumber,
             String email,
             String address,
-            UserRole role
+            UserRole role,
+            LocalDateTime createdAt
     ) {
         this.id = id;
         this.username = username;
@@ -32,6 +36,7 @@ public class UserResponse {
         this.email = email;
         this.address = address;
         this.role = role;
+        this.createdAt = createdAt;
     }
 
     public static UserResponse from(User user) {
@@ -43,7 +48,8 @@ public class UserResponse {
                 user.getPhoneNumber(),
                 user.getEmail(),
                 user.getAddress(),
-                user.getRole()
+                user.getRole(),
+                user.getCreatedAt()
         );
     }
 
@@ -77,5 +83,9 @@ public class UserResponse {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

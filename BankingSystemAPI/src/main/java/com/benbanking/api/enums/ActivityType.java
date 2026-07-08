@@ -2,6 +2,7 @@ package com.benbanking.api.enums;
 
 public enum ActivityType {
     LOGIN,
+    LOGIN_FAILED,
     LOGOUT,
     VIEW_BANK_ACCOUNT,
     VIEW_TRANSACTION_HISTORY,
@@ -11,5 +12,7 @@ public enum ActivityType {
     CLOSE_BANK_ACCOUNT,
     DEPOSIT,
     WITHDRAWAL,
-    TRANSFER
+    TRANSFER,
+    EXTERNAL_TRANSFER,
+    ADMIN_ACCOUNT_STATUS_CHANGE
 }

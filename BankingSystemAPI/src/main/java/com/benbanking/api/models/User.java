@@ -2,6 +2,8 @@ package com.benbanking.api.models;
 
 import com.benbanking.api.enums.UserRole;
 
+import java.time.LocalDateTime;
+
 public class User {
 
     private int id;
@@ -13,9 +15,12 @@ public class User {
     private String email;
     private String address;
     private UserRole role;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public User(int id, String username, String password, String firstName,
-            String lastName, String phoneNumber, String email, String address, UserRole role) {
+            String lastName, String phoneNumber, String email, String address, UserRole role,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.username = username;
         this.password = password;
@@ -25,6 +30,8 @@ public class User {
         this.email = email;
         this.address = address;
         this.role = role;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public int getId() {
@@ -65,6 +72,14 @@ public class User {
 
     public UserRole getRole() {
         return role;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public boolean isAdmin() {

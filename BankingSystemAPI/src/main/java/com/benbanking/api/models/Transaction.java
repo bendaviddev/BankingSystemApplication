@@ -1,33 +1,52 @@
 package com.benbanking.api.models;
 
+import com.benbanking.api.enums.TransactionCategory;
+import com.benbanking.api.enums.TransactionStatus;
 import com.benbanking.api.enums.TransactionType;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class Transaction {
 
     private int transactionId;
+    private String reference;
     private int accountId;
+    private Integer counterpartyAccountId;
     private TransactionType transactionType;
-    private double amount;
+    private TransactionStatus status;
+    private BigDecimal amount;
+    private BigDecimal runningBalance;
+    private TransactionCategory category;
     private String description;
+    private String memo;
     private LocalDateTime createdAt;
 
-    public Transaction(int transactionId, int accountId, TransactionType transactionType, double amount, String description) {
+    public Transaction(
+            int transactionId,
+            String reference,
+            int accountId,
+            Integer counterpartyAccountId,
+            TransactionType transactionType,
+            TransactionStatus status,
+            BigDecimal amount,
+            BigDecimal runningBalance,
+            TransactionCategory category,
+            String description,
+            String memo,
+            LocalDateTime createdAt
+    ) {
         this.transactionId = transactionId;
+        this.reference = reference;
         this.accountId = accountId;
+        this.counterpartyAccountId = counterpartyAccountId;
         this.transactionType = transactionType;
+        this.status = status;
         this.amount = amount;
+        this.runningBalance = runningBalance;
+        this.category = category;
         this.description = description;
-        this.createdAt = LocalDateTime.now();
-    }
-
-    public Transaction(int transactionId, int accountId, TransactionType transactionType, double amount, String description, LocalDateTime createdAt) {
-        this.transactionId = transactionId;
-        this.accountId = accountId;
-        this.transactionType = transactionType;
-        this.amount = amount;
-        this.description = description;
+        this.memo = memo;
         this.createdAt = createdAt;
     }
 
@@ -35,33 +54,47 @@ public class Transaction {
         return transactionId;
     }
 
+    public String getReference() {
+        return reference;
+    }
+
     public int getAccountId() {
         return accountId;
+    }
+
+    public Integer getCounterpartyAccountId() {
+        return counterpartyAccountId;
     }
 
     public TransactionType getTransactionType() {
         return transactionType;
     }
 
-    public double getAmount() {
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public BigDecimal getAmount() {
         return amount;
+    }
+
+    public BigDecimal getRunningBalance() {
+        return runningBalance;
+    }
+
+    public TransactionCategory getCategory() {
+        return category;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getMemo() {
+        return memo;
     }
 
-    public void printTransaction() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        System.out.println("Transaction ID: " + transactionId);
-        System.out.println("Account ID: " + accountId);
-        System.out.println("Type: " + transactionType);
-        System.out.printf("Amount: $%.2f%n", amount);
-        System.out.println("Description: " + description);
-        System.out.println("Date: " + createdAt.format(formatter));
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }
