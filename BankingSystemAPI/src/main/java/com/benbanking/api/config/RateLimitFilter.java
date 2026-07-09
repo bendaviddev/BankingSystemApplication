@@ -27,6 +27,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     );
 
     static final long WINDOW_MS = 60_000L;
+    // Once the map accumulates this many client buckets, stale ones are swept out.
+    private static final int SWEEP_THRESHOLD = 10_000;
 
     private final Map<String, Deque<Long>> requestLog = new ConcurrentHashMap<>();
     private final boolean trustProxy;
@@ -49,6 +51,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String key = clientIp(request) + "|" + request.getRequestURI();
         long now = System.currentTimeMillis();
 
+        if (requestLog.size() > SWEEP_THRESHOLD) {
+            sweepStaleBuckets(now);
+        }
+
         Deque<Long> window = requestLog.computeIfAbsent(key, k -> new ArrayDeque<>());
         synchronized (window) {
             while (!window.isEmpty() && now - window.peekFirst() > WINDOW_MS) {
@@ -65,6 +71,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void sweepStaleBuckets(long now) {
+        requestLog.entrySet().removeIf(entry -> {
+            Deque<Long> window = entry.getValue();
+            synchronized (window) {
+                Long newest = window.peekLast();
+                return newest == null || now - newest > WINDOW_MS;
+            }
+        });
     }
 
     private String clientIp(HttpServletRequest request) {

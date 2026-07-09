@@ -111,9 +111,10 @@ public class AccountController {
                     userId, body.getFromAccountId(), body.getToAccountNumber(), body.getAmount(), body.getMemo());
             alertService.fireForTransaction(userId, result.outLeg());
             alertService.fireTransferReceived(result.recipientUserId(), result.outLeg().getAmount(), result.senderDescription());
+            // Only the sender's leg is returned: the inLeg belongs to the recipient and
+            // would expose their account id and post-credit running balance.
             return ResponseEntity.ok(Map.of(
-                    "outLeg", TransactionResponse.from(result.outLeg()),
-                    "inLeg", TransactionResponse.from(result.inLeg())
+                    "outLeg", TransactionResponse.from(result.outLeg())
             ));
         } catch (InsufficientFundsException e) {
             alertService.fireFailedTransaction(userId, e.getMessage());

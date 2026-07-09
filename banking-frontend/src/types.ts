@@ -82,7 +82,8 @@ export interface PagedResponse<T> {
 
 export interface TransferResult {
   outLeg: Transaction;
-  inLeg: Transaction;
+  /** Present for internal transfers only; external transfers omit the recipient's leg. */
+  inLeg?: Transaction;
 }
 
 export interface AccountLookupResult {
