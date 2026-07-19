@@ -1,0 +1,18 @@
+# Normalize line endings to LF on checkin
+* text=auto eol=lf
+
+# Scripts must stay LF
+*.sh text eol=lf
+
+# Binary files — never diff or normalize
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.jar binary
+*.woff binary
+*.woff2 binary
+
+# Collapse generated files in diffs
+package-lock.json linguist-generated=true
