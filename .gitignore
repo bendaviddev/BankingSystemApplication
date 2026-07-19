@@ -44,3 +44,4 @@ build/
 
 # IDE tooling artifacts
 .github/java-upgrade/
+.claude/
