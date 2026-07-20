@@ -22,6 +22,11 @@ application-local.properties
 # Mac files
 .DS_Store
 
+# Editor backup / swap files
+*.swp
+*.swo
+*~
+
 # Logs
 *.log
 logs/
