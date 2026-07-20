@@ -21,6 +21,11 @@ Thanks for your interest in the Banking System Application.
 - Reference any related issue.
 - Ensure the build passes and no secrets are committed.
 
+## Code style
+
+- Follow the settings in `.editorconfig` for indentation and line endings.
+- Keep formatting consistent with the surrounding code.
+
 ## Reporting issues
 
 Open a GitHub issue with steps to reproduce, expected behavior, and actual behavior.
