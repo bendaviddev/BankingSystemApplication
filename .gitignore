@@ -32,6 +32,10 @@ Desktop.ini
 *.swo
 *~
 
+# Temporary files
+*.tmp
+*.bak
+
 # Logs
 *.log
 logs/
