@@ -13,6 +13,8 @@
 *.jar binary
 *.woff binary
 *.woff2 binary
+*.ttf binary
+*.eot binary
 
 # Collapse generated files in diffs
 package-lock.json linguist-generated=true
