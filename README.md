@@ -582,6 +582,7 @@ No license file present. This is an educational portfolio project.
 - Review code: `docs/ARCHITECTURE.md`, `BankingSystemAPI/src/main/java/com/benbanking/api/`, `banking-frontend/src/`
 
 **For Contributors:**
+- Read **[CONTRIBUTING.md](CONTRIBUTING.md)** for the development workflow and code style
 - Refer to **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for schema, API contract, and design decisions
 - Run tests before committing: `cd BankingSystemAPI && mvn test` and `cd banking-frontend && npm test`
 - Follow the TODO checklist in **Deployment roadmap** section above
