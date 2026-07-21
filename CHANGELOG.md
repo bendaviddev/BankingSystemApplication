@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Repository hygiene files: `.editorconfig`, `.gitattributes`, `CONTRIBUTING.md`.
 - Ignore rules for editor backup and swap files.
+- Code style section in `CONTRIBUTING.md`, linked from the README.
+- Ignore rules for Windows OS and temporary files.
+
+### Changed
+- Mark web fonts as binary and collapse frontend lockfiles in diffs (`.gitattributes`).
 
 ## [2.0.0]
 
