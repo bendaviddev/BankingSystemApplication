@@ -12,9 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ignore rules for editor backup and swap files.
 - Code style section in `CONTRIBUTING.md`, linked from the README.
 - Ignore rules for Windows OS and temporary files.
+- Documented `SERVER_PORT` and `SPRING_PROFILES_ACTIVE` in `.env.example`.
+- EditorConfig rule for 2-space indentation in shell scripts.
 
 ### Changed
 - Mark web fonts as binary and collapse frontend lockfiles in diffs (`.gitattributes`).
+- Trim the Docker build context: exclude editor, temp, and docs files (`.dockerignore`).
 
 ## [2.0.0]
 
