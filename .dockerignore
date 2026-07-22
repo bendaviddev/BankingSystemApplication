@@ -21,6 +21,11 @@ banking-frontend/dist/
 .vscode/
 *.zip
 *.tar.gz
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
 
 # Logs
 *.log
