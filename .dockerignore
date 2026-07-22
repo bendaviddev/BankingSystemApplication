@@ -30,3 +30,7 @@ banking-frontend/dist/
 # Logs
 *.log
 logs/
+
+# Docs — not needed inside the image
+*.md
+docs/
