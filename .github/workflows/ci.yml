@@ -36,3 +36,5 @@ jobs:
           cache-dependency-path: banking-frontend/package-lock.json
       - name: Install dependencies
         run: npm ci
+      - name: Type check
+        run: npm run typecheck
