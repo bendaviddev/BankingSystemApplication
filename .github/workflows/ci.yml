@@ -21,3 +21,11 @@ jobs:
           cache: maven
       - name: Build and test
         run: mvn -B verify
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: banking-frontend
+    steps:
+      - uses: actions/checkout@v4
