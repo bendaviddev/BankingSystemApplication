@@ -5,3 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BankingSystemAPI
+    steps:
+      - uses: actions/checkout@v4
