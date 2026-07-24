@@ -34,3 +34,5 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: banking-frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
