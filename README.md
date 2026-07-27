@@ -1,5 +1,7 @@
 # Banking System — Full-Stack Demo Application
 
+[![CI](https://github.com/bendaviddev/BankingSystemApplication/actions/workflows/ci.yml/badge.svg)](https://github.com/bendaviddev/BankingSystemApplication/actions/workflows/ci.yml)
+
 **A full-featured banking application showcasing modern backend and frontend architecture.** React + TypeScript SPA with a Spring Boot 3.5 REST API, PostgreSQL-backed persistent sessions, and comprehensive transaction processing.
 
 > **⚠️ Educational Portfolio Project — No Real Money or Payment Rails**  
