@@ -7,3 +7,12 @@ on:
 
 permissions:
   contents: read
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        run: docker build -t banking-backend:ci BankingSystemAPI
