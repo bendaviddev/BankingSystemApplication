@@ -25,5 +25,7 @@ jobs:
         run: |
           docker build -t ghcr.io/bendaviddev/banking-backend:latest BankingSystemAPI
           docker push ghcr.io/bendaviddev/banking-backend:latest
-      - name: Build frontend image
-        run: docker build -t banking-frontend:ci banking-frontend
+      - name: Build and push frontend image
+        run: |
+          docker build -t ghcr.io/bendaviddev/banking-frontend:latest banking-frontend
+          docker push ghcr.io/bendaviddev/banking-frontend:latest
