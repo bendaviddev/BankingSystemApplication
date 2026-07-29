@@ -21,7 +21,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build backend image
-        run: docker build -t banking-backend:ci BankingSystemAPI
+      - name: Build and push backend image
+        run: |
+          docker build -t ghcr.io/bendaviddev/banking-backend:latest BankingSystemAPI
+          docker push ghcr.io/bendaviddev/banking-backend:latest
       - name: Build frontend image
         run: docker build -t banking-frontend:ci banking-frontend
