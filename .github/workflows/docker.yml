@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build-images:
@@ -14,6 +15,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build backend image
         run: docker build -t banking-backend:ci BankingSystemAPI
       - name: Build frontend image
