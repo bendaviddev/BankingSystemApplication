@@ -23,8 +23,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push backend image
         run: |
-          docker build -t ghcr.io/bendaviddev/banking-backend:latest BankingSystemAPI
-          docker push ghcr.io/bendaviddev/banking-backend:latest
+          docker build \
+            -t ghcr.io/bendaviddev/banking-backend:latest \
+            -t ghcr.io/bendaviddev/banking-backend:${{ github.sha }} \
+            BankingSystemAPI
+          docker push --all-tags ghcr.io/bendaviddev/banking-backend
       - name: Build and push frontend image
         run: |
           docker build -t ghcr.io/bendaviddev/banking-frontend:latest banking-frontend
