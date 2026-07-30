@@ -30,5 +30,8 @@ jobs:
           docker push --all-tags ghcr.io/bendaviddev/banking-backend
       - name: Build and push frontend image
         run: |
-          docker build -t ghcr.io/bendaviddev/banking-frontend:latest banking-frontend
-          docker push ghcr.io/bendaviddev/banking-frontend:latest
+          docker build \
+            -t ghcr.io/bendaviddev/banking-frontend:latest \
+            -t ghcr.io/bendaviddev/banking-frontend:${{ github.sha }} \
+            banking-frontend
+          docker push --all-tags ghcr.io/bendaviddev/banking-frontend
