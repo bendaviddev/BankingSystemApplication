@@ -208,6 +208,16 @@ docker compose down
 # Reset data (delete volume): docker compose down -v
 ```
 
+**Run the published images (no local build):**
+
+CI publishes both service images to GHCR on every push to `main`. To run that
+pre-built stack instead of building from source:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
 **Inside containers:**
 - Backend connects to `db:3306` (service name, not localhost)
 - Frontend proxies `/api` to `http://backend:8080` (via `BACKEND_URL` env var)
