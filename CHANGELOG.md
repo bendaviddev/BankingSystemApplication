@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - EditorConfig rule for 2-space indentation in shell scripts.
 - Pin the frontend Node version to 20+ via `engines` and `.nvmrc`.
 - Standalone `typecheck` npm script for running `tsc --noEmit` without a full build.
+- CI workflow (`ci.yml`) building and testing the backend (`mvn verify`) and frontend (typecheck, build, test), with dependency caching and build artifacts.
+- Docker workflow (`docker.yml`) building both service images and pushing them to GHCR, tagged `latest` and by commit SHA.
+- CI status badge in the README.
 
 ### Changed
 - Mark web fonts as binary and collapse frontend lockfiles in diffs (`.gitattributes`).
