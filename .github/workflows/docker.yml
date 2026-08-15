@@ -39,3 +39,12 @@ jobs:
             -t ghcr.io/bendaviddev/banking-frontend:${{ github.sha }} \
             banking-frontend
           docker push --all-tags ghcr.io/bendaviddev/banking-frontend
+      - name: Scan images for known vulnerabilities
+        run: |
+          for img in banking-backend banking-frontend; do
+            echo "::group::Trivy scan $img"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image --severity HIGH,CRITICAL --ignore-unfixed \
+              ghcr.io/bendaviddev/$img:latest
+            echo "::endgroup::"
+          done
